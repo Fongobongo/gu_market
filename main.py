@@ -3,7 +3,6 @@ import requests
 import concurrent.futures
 
 from tqdm import tqdm
-from datetime import datetime
 
 
 def get_amount_of_cards():
@@ -24,7 +23,7 @@ def save_cards_to_file(cards_list):
 
     card_ids = {}
 
-    with open('cards.txt', 'w', encoding='utf-8') as f:
+    with open('tradeable_cards.txt', 'w', encoding='utf-8') as f:
         for item in cards_list:
             if item['set'] != 'welcome' and item['collectable'] is not False:
                 card_ids[item['id']] = item['name']
@@ -58,7 +57,6 @@ def get_cards_prices(card_id, eth, gods):
     headers = {"Accept": "*/*"}
 
     for k, v in urls.items():
-
         complete = False
 
         while complete is False:
@@ -80,13 +78,13 @@ def get_cards_prices(card_id, eth, gods):
                     elif k == 'gods':
                         prices_gods.append(round(float(order['buy']['data']['quantity_with_fees']) / 10 ** 18 * gods, 2))
 
-                return sorted(prices_eth), sorted(prices_gods)
-
             elif orders.reason == 'Too Many Requests':
                 time.sleep(60)
             else:
                 print(orders.reason)
                 return None, None
+
+    return sorted(prices_eth), sorted(prices_gods)
 
 
 def split_cards_to_chunks(dict_of_cards):
@@ -126,7 +124,7 @@ def run_multiple_requests(chunks_list):
 
     profit_list = []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as e:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as e:
         fut = [e.submit(calculate_top_profit, card) for card in chunks_list]
         for r in tqdm(concurrent.futures.as_completed(fut), total=len(chunks_list)):
             profit_list.append(r.result())
@@ -151,11 +149,11 @@ def get_top_profit(list_of_prices):
     profit_eth_by_rate = []
     profit_gods_by_rate = []
 
-    for card in sorted(profit_eth, key=lambda x: x[3], reverse=True)[:10]:
+    for card in sorted(profit_eth, key=lambda x: x[3], reverse=True):
         profit_eth_by_rate.append(f'[{card[0]}]: [Profit in {card[1]}: +{card[3]}% ({card[2]}$)], [ETH: {card[4]}$ vs GODS: {card[5]}$]')
 
-    for card in sorted(profit_gods, key=lambda x: x[3], reverse=True)[:10]:
-        profit_gods_by_rate.append(f'[{card[0]}]:' + f'[Profit in {card[1]}: +{card[3]}% ({card[2]}$)], [GODS: {card[5]}$ vs ETH: {card[4]}$]')
+    for card in sorted(profit_gods, key=lambda x: x[3], reverse=True):
+        profit_gods_by_rate.append(f'[{card[0]}]: [Profit in {card[1]}: +{card[3]}% ({card[2]}$)], [GODS: {card[5]}$ vs ETH: {card[4]}$]')
 
     return profit_eth_by_rate, profit_gods_by_rate
 
@@ -173,9 +171,6 @@ def write_profit_to_file(eth, gods):
 
 if __name__ == '__main__':
 
-    start_time = datetime.now()
-    print('Start time:', start_time)
-
     amount_of_cards = get_amount_of_cards()
 
     all_cards = get_cards_list(amount_of_cards)
@@ -191,6 +186,3 @@ if __name__ == '__main__':
     eth_profit, gods_profit = get_top_profit(profit)
 
     write_profit_to_file(eth_profit, gods_profit)
-
-    print('End time:', datetime.now())
-    print('Total time:', datetime.now() - start_time)
