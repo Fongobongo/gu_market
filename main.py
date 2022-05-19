@@ -9,6 +9,7 @@ def get_amount_of_cards():
 
     url_total_cards = 'https://api.godsunchained.com/v0/proto?page=1&perPage=0'
     total_cards_amount = requests.get(url_total_cards).json()['total']
+
     return total_cards_amount
 
 
@@ -16,6 +17,7 @@ def get_cards_list(amount):
 
     url_all_cards = f'https://api.godsunchained.com/v0/proto?page=1&perPage={amount}'
     cards_dict = requests.get(url_all_cards).json()['records']
+
     return cards_dict
 
 
@@ -57,6 +59,7 @@ def get_cards_prices(card_id, eth, gods):
     headers = {"Accept": "*/*"}
 
     for k, v in urls.items():
+
         complete = False
 
         while complete is False:
@@ -124,7 +127,7 @@ def run_multiple_requests(chunks_list):
 
     profit_list = []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as e:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as e:
         fut = [e.submit(calculate_top_profit, card) for card in chunks_list]
         for r in tqdm(concurrent.futures.as_completed(fut), total=len(chunks_list)):
             profit_list.append(r.result())
@@ -150,10 +153,12 @@ def get_top_profit(list_of_prices):
     profit_gods_by_rate = []
 
     for card in sorted(profit_eth, key=lambda x: x[3], reverse=True):
-        profit_eth_by_rate.append(f'[{card[0]}]: [Profit in {card[1]}: +{card[3]}% ({card[2]}$)], [ETH: {card[4]}$ vs GODS: {card[5]}$]')
+        if card[3] >= min_profit_rate and card[2] >= min_profit_usd:
+            profit_eth_by_rate.append(f'[{card[0]}], [Profit in {card[1]}: +{card[3]}% ({card[2]}$)], [ETH: {card[4]}$ vs GODS: {card[5]}$]')
 
     for card in sorted(profit_gods, key=lambda x: x[3], reverse=True):
-        profit_gods_by_rate.append(f'[{card[0]}]: [Profit in {card[1]}: +{card[3]}% ({card[2]}$)], [GODS: {card[5]}$ vs ETH: {card[4]}$]')
+        if card[3] >= min_profit_rate and card[2] >= min_profit_usd:
+            profit_gods_by_rate.append(f'[{card[0]}], [Profit in {card[1]}: +{card[3]}% ({card[2]}$)], [GODS: {card[5]}$ vs ETH: {card[4]}$]')
 
     return profit_eth_by_rate, profit_gods_by_rate
 
@@ -169,7 +174,11 @@ def write_profit_to_file(eth, gods):
             f.write(str(item) + '\n')
 
 
-if __name__ == '__main__':
+def main():
+
+    global min_profit_rate, min_profit_usd
+    min_profit_rate = 30
+    min_profit_usd = 0.5
 
     amount_of_cards = get_amount_of_cards()
 
@@ -177,6 +186,7 @@ if __name__ == '__main__':
 
     tradeable_cards = save_cards_to_file(all_cards)
 
+    global eth_price, gods_price
     eth_price, gods_price = get_crypto_prices()
 
     chunks = split_cards_to_chunks(tradeable_cards)
@@ -186,3 +196,10 @@ if __name__ == '__main__':
     eth_profit, gods_profit = get_top_profit(profit)
 
     write_profit_to_file(eth_profit, gods_profit)
+
+    main()
+
+
+if __name__ == '__main__':
+
+    main()
