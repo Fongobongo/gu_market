@@ -1,6 +1,7 @@
 import time
 import requests
 import concurrent.futures
+from db.db import is_db_exists, create_db, create_tables
 
 from tqdm import tqdm
 
@@ -202,4 +203,10 @@ def main():
 
 if __name__ == '__main__':
 
-    main()
+    check = is_db_exists('gu')
+
+    if not check:
+        create_db('gu')
+        create_tables('gu')
+
+    # main()
