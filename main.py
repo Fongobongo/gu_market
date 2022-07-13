@@ -1,7 +1,7 @@
 import time
 import requests
 import concurrent.futures
-from db.db import is_db_exists, create_db, create_tables
+from db.db import is_db_exists, create_db, create_table_cards, create_table_prices, write_prices_to_db
 
 from tqdm import tqdm
 
@@ -189,6 +189,7 @@ def main():
 
     global eth_price, gods_price
     eth_price, gods_price = get_crypto_prices()
+    write_prices_to_db('gu', eth_price, gods_price)
 
     chunks = split_cards_to_chunks(tradeable_cards)
 
@@ -207,6 +208,8 @@ if __name__ == '__main__':
 
     if not check:
         create_db('gu')
-        create_tables('gu')
+        create_table_cards('gu')
+        create_table_prices('gu')
+
 
     # main()
