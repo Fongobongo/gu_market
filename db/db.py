@@ -77,3 +77,15 @@ def write_tokens_to_db(db, eth_price, gods_price):
             UPDATE tokens SET price=(%s) where name='eth';
             UPDATE tokens SET price=(%s) where name='gods';
             ''', (eth_price, gods_price))
+
+
+def write_prices_to_db(db, quality, token):
+
+    conn = psycopg2.connect(user="postgres", password="123456", host="localhost", port=5432, dbname=db)
+
+    with conn:
+        with conn.cursor() as cursor:
+            cursor.execute('''
+            UPDATE tokens SET price=(%s) where name='eth';
+            UPDATE tokens SET price=(%s) where name='gods';
+            ''', (eth_price, gods_price))

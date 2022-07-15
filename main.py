@@ -1,7 +1,7 @@
 import time
 import requests
 import concurrent.futures
-from db.db import is_db_exists, create_db, create_tables, fill_table_tokens, write_tokens_to_db
+from db.db import is_db_exists, create_db, create_tables, fill_table_tokens, write_tokens_to_db, write_prices_to_db
 
 from tqdm import tqdm
 
@@ -199,6 +199,8 @@ def main():
 
     write_profit_to_file(eth_profit, gods_profit)
 
+    write_prices_to_db('gu', quality, token)
+
     main()
 
 
@@ -211,5 +213,4 @@ if __name__ == '__main__':
         create_tables('gu')
         fill_table_tokens('gu')
 
-
-    # main()
+    main()
